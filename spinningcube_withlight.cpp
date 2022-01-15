@@ -230,10 +230,6 @@ int main() {
   // Unbind vao
   glBindVertexArray(0);
 
-  // load textures
-  diffuseMap = loadTexture("container2.png");
-  specularMap = loadTexture("container2_specular.png");
-
   // Uniforms
   // - Model matrix
   // - View matrix
@@ -326,12 +322,12 @@ void render(double currentTime) {
 
   projection = glm::perspective(glm::radians(50.0f),
                                  (float) gl_width / (float) gl_height,
+                                 0.1f, 1000.0f);
 
 
   normal_to_world =  glm::inverseTranspose(glm::mat3(model));
   glUniform3fv(normal_to_world_location, 1, glm::value_ptr(normal_to_world)); //guardar valor en variable
   glUniformMatrix4fv(normal_to_world_location, 1, GL_FALSE, glm::value_ptr(normal_to_world));
-                                 0.1f, 1000.0f);
   glUniformMatrix4fv(proj_location, 1, GL_FALSE, glm::value_ptr(projection));
 
   glDrawArrays(GL_TRIANGLES, 0, 36);
