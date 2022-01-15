@@ -32,6 +32,18 @@ def normalize(x):
     x /= np.linalg.norm(x)
     return x
 
+def sign (p1, p2, p3):
+    return (p1[0] - p3[0]) * (p2[1] - p2[1]) - (p2[0] - p3[0]) * (p1[1] - p3[1]);
+
+def is_point_on_triangle(point, v1, v2, v3):
+    d1 = sign(point, v1, v2);
+    d2 = sign(point, v2, v3);
+    d3 = sign(point, v3, v1);
+
+    has_neg = (d1 < 0) or (d2 < 0) or (d3 < 0);
+    has_pos = (d1 > 0) or (d2 > 0) or (d3 > 0);
+
+    return not(has_neg and has_pos);
 
 def intersect_plane(O, D, P, N):
     # Return the distance from O to the intersection of the ray (O, D) with the 
@@ -45,9 +57,7 @@ def intersect_plane(O, D, P, N):
         return np.inf
     return d
 
-
-def intersect_triangle(O, D, P, N):
-    # REAHACER PARA TRIANGULO
+def intersect_triangle(O, D, P, N, v1, v2, v3):
     # Return the distance from O to the intersection of the ray (O, D) with the
     # plane (P, N), or +inf if there is no intersection.
     # O and P are 3D points, D and N (normal) are normalized vectors.
@@ -55,7 +65,8 @@ def intersect_triangle(O, D, P, N):
     if np.abs(denom) < 1e-6:
         return np.inf
     d = np.dot(P - O, N) / denom
-    if d < 0:
+    isIn = True #is_point_on_triangle(P - O, v1, v2, v3)
+    if (d < 0) or (not isIn):
         return np.inf
     return d
 
@@ -86,17 +97,14 @@ def intersect(O, D, obj):
     elif obj['type'] == 'sphere':
         return intersect_sphere(O, D, obj['position'], obj['radius'])
     elif (obj['type']) == 'triangle':
-        return intersect_triangle(O, D, obj['position'], obj['sides'])
-
+        return intersect_triangle(O, D, obj['position'], obj['normal'], obj['v1'], obj['v2'], obj['v3'])
 
 def get_normal(obj, M):
     # Find normal.
     if obj['type'] == 'sphere':
         N = normalize(M - obj['position'])
-    ## Cambiar para triangulo
     elif obj['type'] == 'triangle':
-        # Para triangulo
-        N = obj['sides']
+        N = obj['normal']
     elif obj['type'] == 'plane':
         N = obj['normal']
     return N
@@ -147,12 +155,14 @@ def add_sphere(position, radius, color):
                 radius=np.array(radius), color=np.array(color), reflection=.5)
 
 
-def add_triangle(position, normal):
+def add_triangle(position, normal, v1, v2, v3, color):
     return dict(type='triangle',
                 position=np.array(position),
                 normal=np.array(normal),
-                color=lambda M: (color_plane0
-                                 if (int(M[0] * 2) % 2) == (int(M[2] * 2) % 2) else color_plane1),
+                v1 = v1,
+                v2 = v2,
+                v3 = v3,
+                color=np.array(color),
                 diffuse_c=.75, specular_c=.5, reflection=.25)
 
 
@@ -189,11 +199,13 @@ def calculate_color(light, color_light):
 # List of objects.
 color_plane0 = 1. * np.ones(3)
 color_plane1 = 0. * np.ones(3)
-scene = [add_sphere([.75, .1, 1.], .6, [0., 0., 1.]),
-         add_sphere([-.75, .1, 2.25], .6, [.5, .223, .5]),
-         add_sphere([-2.75, .1, 3.5], .6, [1., .572, .184]),
-         add_triangle([-3.75, .1, 4.5], [.5, .6, .8], [1., .572, .184]),
+scene = [
+         add_sphere([.75, .1, 1.], .6, [0., 0., 1.]),
+#         add_sphere([-.75, .1, 2.25], .6, [.5, .223, .5]),
+#         add_sphere([-2.75, .1, 3.5], .6, [1., .572, .184]),
          add_plane([0., -.5, 0.], [0., 1., 0.]),
+         #add_plane([0., 0., 2.], [0., 0., 1.]),
+         add_triangle([0., 0. , 2.], [0., 0., 1.], [.0, .0,  2], [.1, .1,  2], [.1, .0,  2], [.5, .223, .5])
          ]
 
 # Light position and color.
