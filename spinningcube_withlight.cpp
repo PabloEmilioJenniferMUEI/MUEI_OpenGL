@@ -1,7 +1,3 @@
-// Copyright (C) 2020 Emilio J. Padrón
-// Released as Free Software under the X11 License
-// https://spdx.org/licenses/X11.html
-
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <stdio.h>
@@ -14,7 +10,7 @@
 #include "glm/ext.hpp"
 
 
-#include "textfile.h"
+#include "textfile.c"
 
 int gl_width = 640;
 int gl_height = 480;
@@ -32,7 +28,7 @@ const char *vertexFileName = "spinningcube_withlight_vs.glsl";
 const char *fragmentFileName = "spinningcube_withlight_fs.glsl";
 
 // Camera
-glm::vec3 camera_pos(0.0f, 0.0f, 39.0f);
+glm::vec3 camera_pos(0.0f, 0.0f, 3.0f);
 
 // Lighting
 glm::vec3 light_pos(1.2f, 1.0f, 2.0f);
@@ -43,8 +39,8 @@ glm::vec3 light_specular(1.0f, 1.0f, 1.0f);
 // Material
 glm::vec3 material_ambient(1.0f, 0.5f, 0.31f);
 glm::vec3 material_diffuse(1.0f, 0.5f, 0.31f);
-glm::vec3 material_specular(1.0f, 0.5f, 0.31f);
-const GLfloat material_shininess = 57.0f;
+glm::vec3 material_specular(0.5f, 0.5f, 0.5f);
+const GLfloat material_shininess = 32.0f;
 
 int main() {
   // start GL context and O/S window using the GLFW helper library
@@ -53,10 +49,10 @@ int main() {
     return 1;
   }
 
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-  glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+  //glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+  //glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+  //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+  //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
   GLFWwindow* window = glfwCreateWindow(gl_width, gl_height, "My spinning cube", NULL, NULL);
   if (!window) {
@@ -205,7 +201,7 @@ int main() {
 
 // Vertex Buffer Object (for vertex coordinates)
   GLuint vbo = 0;
-  glGenBuffers(1, &vbo);
+  glGenBuffers(3, &vbo);
   glBindBuffer(GL_ARRAY_BUFFER, vbo);
   glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_positions), vertex_positions, GL_STATIC_DRAW);
 
@@ -216,13 +212,8 @@ int main() {
 
   // 1: vertex normals (x, y, z)
   // normal
-  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
   glEnableVertexAttribArray(1);
-
-  // texture
-  glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-  glEnableVertexAttribArray(2);
-
 
   // Unbind vbo (it was conveniently registered by VertexAttribPointer)
   glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -239,12 +230,11 @@ int main() {
   // - Light data
   // - Material data
 
-  // Select shader to bind attributes
-  glUseProgram(shader_program);
-
   model_location = glGetUniformLocation(shader_program, "model");
   view_location = glGetUniformLocation(shader_program, "view");
   proj_location = glGetUniformLocation(shader_program, "projection");
+  
+  
   normal_to_world_location = glGetUniformLocation(shader_program, "normal_to_world");
   materialA_location = glGetUniformLocation(shader_program, "material.ambient");
   materialD_location = glGetUniformLocation(shader_program, "material.diffuse");
@@ -284,17 +274,21 @@ void render(double currentTime) {
   glUseProgram(shader_program);
   glBindVertexArray(vao);
 
-  glm::mat4 model, view, projection, normal_to_world; //declarar variables
+  glm::mat4 model, view, projection;
+  glm::mat3 normal_to_world; //declarar variables
  
-  //matrices lucesf
-  glUniform1i(materialD_location, 0);
-  glUniform1i(materialS_location, 1);
+  //matrices
+  glUniform3f(materialA_location, material_ambient.x, material_ambient.y, material_ambient.z);
+  glUniform3f(materialD_location, material_diffuse.x, material_diffuse.y, material_diffuse.z);
+  glUniform3f(materialS_location, material_specular.x, material_specular.y, material_specular.z);
   glUniform1f(materialSH_location, material_shininess);
-  glUniform3fv(view_pos_location, 1, glm::value_ptr(camera_pos));
-  glUniform3fv(lightA_location, 1, glm::value_ptr(light_ambient));
-  glUniform3fv(lightD_location, 1, glm::value_ptr(light_diffuse));
-  glUniform3fv(lightS_location, 1, glm::value_ptr(light_specular));
-  glUniform3fv(lightP_location, 1, glm::value_ptr(light_pos));
+  
+  glUniform3f(view_pos_location, camera_pos.x, camera_pos.y, camera_pos.z);
+  
+  glUniform3f(lightA_location, light_ambient.x, light_ambient.y, light_ambient.z);
+  glUniform3f(lightD_location, light_diffuse.x, light_diffuse.y, light_diffuse.z);
+  glUniform3f(lightS_location, light_specular.x, light_specular.y, light_specular.z);
+  glUniform3f(lightP_location, light_pos.x, light_pos.y, light_pos.z);
   // view_matrix
 
   model = glm::mat4(1.f);
@@ -305,11 +299,6 @@ void render(double currentTime) {
   glUniformMatrix4fv(view_location, 1, GL_FALSE, glm::value_ptr(view));
   // Moving cube
   // model_matrix
-  model = glm::translate(glm::mat4(1.f), glm::vec3(0.0f, 0.0f, -4.0f));
-  model = glm::translate(model,
-                             glm::vec3(sinf(2.1f * f) * 0.5f,
-                                       cosf(1.7f * f) * 0.5f,
-                                       sinf(1.3f * f) * cosf(1.5f * f) * 2.0f));
 
   model = glm::rotate(model,
                           glm::radians((float)currentTime * 45.0f),
@@ -317,18 +306,16 @@ void render(double currentTime) {
   model = glm::rotate(model,
                           glm::radians((float)currentTime * 81.0f),
                           glm::vec3(1.0f, 0.0f, 0.0f));
-
   glUniformMatrix4fv(model_location, 1, GL_FALSE, glm::value_ptr(model));
-
+  //proj_matrix
   projection = glm::perspective(glm::radians(50.0f),
                                  (float) gl_width / (float) gl_height,
                                  0.1f, 1000.0f);
-
-
-  normal_to_world =  glm::inverseTranspose(glm::mat3(model));
-  glUniform3fv(normal_to_world_location, 1, glm::value_ptr(normal_to_world)); //guardar valor en variable
-  glUniformMatrix4fv(normal_to_world_location, 1, GL_FALSE, glm::value_ptr(normal_to_world));
   glUniformMatrix4fv(proj_location, 1, GL_FALSE, glm::value_ptr(projection));
+  
+  
+  normal_to_world = glm::inverseTranspose(glm::mat3(model));
+  glUniformMatrix3fv(normal_to_world_location, 1, GL_FALSE, glm::value_ptr(normal_to_world)); //guardar valor en variable
 
   glDrawArrays(GL_TRIANGLES, 0, 36);
 }

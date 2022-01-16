@@ -1,7 +1,7 @@
 all: phong
 
 phong: spinningcube_withlight.cpp textfile.c
-	g++ -o phong spinningcube_withlight.cpp textfile.c -lGL -lGLEW -lglfw
+	gcc -o phong spinningcube_withlight.cpp -lGL -lGLEW -lglfw -lm
 
 run:
 	./phong
