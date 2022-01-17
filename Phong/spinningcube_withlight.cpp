@@ -247,16 +247,11 @@ int main() {
 	materialSH_location = glGetUniformLocation(shader_program, "material.shininess");
 	view_pos_location = glGetUniformLocation(shader_program, "view_pos");
 	
-	printf("view_pos_location: %d \n", view_pos_location);
 	// light 1
 	lightA_location = glGetUniformLocation(shader_program, "pointLights[0].ambient");
 	lightD_location = glGetUniformLocation(shader_program, "pointLights[0].diffuse");
 	lightS_location = glGetUniformLocation(shader_program, "pointLights[0].specular");
 	lightP_location = glGetUniformLocation(shader_program, "pointLights[0].position");
-	printf("lightA_location: %d \n", lightA_location);
-	printf("lightD_location: %d \n", lightD_location);
-	printf("lightS_location: %d \n", lightS_location);
-	printf("lightP_location: %d \n", lightP_location);
 
 
 	// light 2
@@ -264,10 +259,6 @@ int main() {
 	lightD_location_2 = glGetUniformLocation(shader_program, "pointLights[1].diffuse");
 	lightS_location_2 = glGetUniformLocation(shader_program, "pointLights[1].specular");
 	lightP_location_2 = glGetUniformLocation(shader_program, "pointLights[1].position");
-	printf("lightA_location_2: %d \n", lightA_location);
-	printf("lightA_location_2: %d \n", lightD_location);
-	printf("lightA_location_2: %d \n", lightS_location);
-	printf("lightA_location_2: %d \n", lightP_location);
 
 	// Render loop
 	while(!glfwWindowShouldClose(window)) {
@@ -296,7 +287,7 @@ void render(double currentTime) {
 	glUseProgram(shader_program);
 	glBindVertexArray(vao);
 
-	glm::mat4 model, view, projection;
+	glm::mat4 model, view, projection, cube_2;
 	glm::mat3 normal_to_world; //declarar variables
 
 	//matrices
@@ -317,19 +308,18 @@ void render(double currentTime) {
 	glUniform3f(lightA_location_2, light_ambient.x, light_ambient.y, light_ambient.z);
 	glUniform3f(lightD_location_2, light_diffuse.x, light_diffuse.y, light_diffuse.z);
 	glUniform3f(lightS_location_2, light_specular.x, light_specular.y, light_specular.z);
-	glUniform3f(lightP_location_2, -light_pos.x, -light_pos.y, -light_pos.z);
+	glUniform3f(lightP_location_2, light_pos.x, -light_pos.y, -light_pos.z);
 
 	// view_matrix
 
-	model = glm::mat4(1.f);
+	
 	view = glm::lookAt(                 camera_pos,  // pos
 							glm::vec3(0.0f, 0.0f, 0.0f),  // target
 							glm::vec3(0.0f, 1.0f, 0.0f)); // up
 
 	glUniformMatrix4fv(view_location, 1, GL_FALSE, glm::value_ptr(view));
-	// Moving cube
-	// model_matrix
-
+	// cube1
+	model = glm::mat4(1.f);
 	model = glm::rotate(model,
 						  glm::radians((float)currentTime * 45.0f),
 						  glm::vec3(0.0f, 1.0f, 0.0f));
@@ -345,10 +335,29 @@ void render(double currentTime) {
 
 
 	normal_to_world = glm::inverseTranspose(glm::mat3(model));
-	glUniformMatrix3fv(normal_to_world_location, 1, GL_FALSE, glm::value_ptr(normal_to_world)); //guardar valor en variable
+	glUniformMatrix3fv(normal_to_world_location, 1, GL_FALSE, glm::value_ptr(normal_to_world)); 
 
 	glDrawArrays(GL_TRIANGLES, 0, 36);
+	
+	//cube2 
+	cube_2 = glm::mat4(1.f);
+	cube_2 = glm::translate(cube_2, glm::vec3(-1.0f, 0.0f, 0.0f));
+	cube_2 = glm::scale(cube_2, glm::vec3(0.5f));;
+	cube_2 = glm::rotate(cube_2,
+						  glm::radians((float)currentTime * 45.0f),
+						  glm::vec3(0.0f, 1.0f, 0.0f));
+	cube_2 = glm::rotate(cube_2,
+						  glm::radians((float)currentTime * 81.0f),
+						  glm::vec3(1.0f, 0.0f, 0.0f));
+	glUniformMatrix4fv(model_location, 1, GL_FALSE, glm::value_ptr(cube_2));
+	
+	normal_to_world = glm::inverseTranspose(glm::mat3(cube_2));
+	glUniformMatrix3fv(normal_to_world_location, 1, GL_FALSE, glm::value_ptr(normal_to_world)); 
+
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+	
 }
+
 
 void processInput(GLFWwindow *window) {
 	if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
