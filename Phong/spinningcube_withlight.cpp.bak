@@ -307,11 +307,6 @@ void render(double currentTime) {
 
 	glUniform3f(view_pos_location, camera_pos.x, camera_pos.y, camera_pos.z);  
 	
-	// light 1
-	glUniform3f(lightA_location, light_ambient.x, light_ambient.y, light_ambient.z);
-	glUniform3f(lightD_location, light_diffuse.x, light_diffuse.y, light_diffuse.z);
-	glUniform3f(lightS_location, light_specular.x, light_specular.y, light_specular.z);
-	glUniform3f(lightP_location, light_pos.x, light_pos.y, light_pos.z);
 	
 	// light 2
 	glUniform3f(lightA_location_2, light_ambient.x, light_ambient.y, light_ambient.z);

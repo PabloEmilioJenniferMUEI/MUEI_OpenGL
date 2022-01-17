@@ -28,6 +28,7 @@ uniform Light pointLights[N_POINT_LIGHTS];
 uniform vec3 view_pos;
 
 void main() {
+  printf("Test");
   vec3 view_dir = normalize(view_pos - frag_3Dpos);
   vec3 result = CalcPointLight(pointLights[0], view_dir);
   for(int i = 1; i < N_POINT_LIGHTS; i++){
