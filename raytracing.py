@@ -28,22 +28,33 @@ import matplotlib.pyplot as plt
 w = 400
 h = 300
 
+#el producto vectorial de dos vectores es un tercer vector perpendicular
+
 def normalize(x):
     x /= np.linalg.norm(x)
     return x
 
-def sign (p1, p2, p3):
-    return (p1[0] - p3[0]) * (p2[1] - p2[1]) - (p2[0] - p3[0]) * (p1[1] - p3[1]);
+def is_point_on_triangle(p, v0, v1, v2):
+    v0v1 = [v1[0] - v0[0], v1[1] - v0[1], v1[2] - v0[2]]
+    v1v2 = [v2[0] - v1[0], v2[1] - v1[1], v2[2] - v1[2]]
+    v2v0 = [v0[0] - v2[0], v0[1] - v0[1], v0[2] - v2[2]]
 
-def is_point_on_triangle(point, v1, v2, v3):
-    d1 = sign(point, v1, v2);
-    d2 = sign(point, v2, v3);
-    d3 = sign(point, v3, v1);
+    v0p = [p[0] - v0[0], p[1] - v0[1], p[2] - v0[2]]
+    v1p = [p[0] - v1[0], p[1] - v1[1], p[2] - v1[2]]
+    v2p = [p[0] - v2[0], p[1] - v2[1], p[2] - v2[2]]
 
-    has_neg = (d1 < 0) or (d2 < 0) or (d3 < 0);
-    has_pos = (d1 > 0) or (d2 > 0) or (d3 > 0);
+    res1 = np.dot(v0v1, v0p) > 0
+    res2 = np.dot(v1v2, v1p) > 0
+    res3 = np.dot(v2v0, v2p) > 0
 
-    return not(has_neg and has_pos);
+    return res1 and res2 and res3
+
+def get_point_intersection_ray_plane(rayPoint, rayDirection, planePoint, planeNormal):
+    ndotu = planeNormal.dot(rayDirection)
+
+    w = rayPoint - planePoint
+    si = -planeNormal.dot(w) / ndotu
+    return w + si * rayDirection + planePoint
 
 def intersect_plane(O, D, P, N):
     # Return the distance from O to the intersection of the ray (O, D) with the 
@@ -57,16 +68,19 @@ def intersect_plane(O, D, P, N):
         return np.inf
     return d
 
-def intersect_triangle(O, D, P, N, v1, v2, v3):
+def intersect_triangle(O, D, V1, V2, V3, TN):
     # Return the distance from O to the intersection of the ray (O, D) with the
-    # plane (P, N), or +inf if there is no intersection.
+    # triangle (v1, v2, v3), or +inf if there is no intersection.
     # O and P are 3D points, D and N (normal) are normalized vectors.
-    denom = np.dot(D, N)
+    denom = np.dot(D, TN)
     if np.abs(denom) < 1e-6:
         return np.inf
-    d = np.dot(P - O, N) / denom
-    isIn = True #is_point_on_triangle(P - O, v1, v2, v3)
-    if (d < 0) or (not isIn):
+    d = np.dot(V1 - O, TN) / denom
+    if (d < 0):
+        return np.inf
+    intersection = get_point_intersection_ray_plane(O, D, V1, TN)
+    is_in = is_point_on_triangle(intersection, V1, V2, V3)
+    if not is_in:
         return np.inf
     return d
 
@@ -97,7 +111,7 @@ def intersect(O, D, obj):
     elif obj['type'] == 'sphere':
         return intersect_sphere(O, D, obj['position'], obj['radius'])
     elif (obj['type']) == 'triangle':
-        return intersect_triangle(O, D, obj['position'], obj['normal'], obj['v1'], obj['v2'], obj['v3'])
+        return intersect_triangle(O, D, obj['v1'], obj['v2'], obj['v3'], obj['normal'])
 
 def get_normal(obj, M):
     # Find normal.
@@ -155,15 +169,18 @@ def add_sphere(position, radius, color):
                 radius=np.array(radius), color=np.array(color), reflection=.5)
 
 
-def add_triangle(position, normal, v1, v2, v3, color):
+def add_triangle(v1, v2, v3, color):
+    vector_1 = [v2[0] - v1[0], v2[1] - v1[1], v2[2] - v1[2]]
+    vector_2 = [v3[0] - v1[0], v3[1] - v1[1], v3[2] - v1[2]]
+    n = np.cross(vector_1, vector_2)
+
     return dict(type='triangle',
-                position=np.array(position),
-                normal=np.array(normal),
                 v1 = v1,
                 v2 = v2,
                 v3 = v3,
+                normal = n,
                 color=np.array(color),
-                diffuse_c=.75, specular_c=.5, reflection=.25)
+                diffuse_c=.75, specular_c=.75, reflection=.5)
 
 
 def add_plane(position, normal):
@@ -201,11 +218,10 @@ color_plane0 = 1. * np.ones(3)
 color_plane1 = 0. * np.ones(3)
 scene = [
          add_sphere([.75, .1, 1.], .6, [0., 0., 1.]),
-#         add_sphere([-.75, .1, 2.25], .6, [.5, .223, .5]),
-#         add_sphere([-2.75, .1, 3.5], .6, [1., .572, .184]),
+         add_sphere([-.75, .1, 2.25], .6, [.5, .223, .5]),
+         add_sphere([-2.75, .1, 3.5], .6, [1., .572, .184]),
          add_plane([0., -.5, 0.], [0., 1., 0.]),
-         #add_plane([0., 0., 2.], [0., 0., 1.]),
-         add_triangle([0., 0. , 2.], [0., 0., 1.], [.0, .0,  2], [.1, .1,  2], [.1, .0,  2], [.5, .223, .5])
+         add_triangle([0, .5, .25], [0, .75, .75], [.75, .75, .25], [0., 0., 1.])
          ]
 
 # Light position and color.
