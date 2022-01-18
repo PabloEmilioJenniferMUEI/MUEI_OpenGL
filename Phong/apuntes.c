@@ -60,7 +60,7 @@ void main(){
 	// Cálculo da comp.difusa usando light_pos e frag_3Dpos
 	float diff = max(dot(normal, light_dir), 0.0);
 	vec3 diffuse = light.diffuse * diff * material.diffuse;//ata diapo 11
-	//vec3 diffuse = light.diffuse * max(dot(norm, light_dir), 0.0) * vec3(texture(material.diffuse, text_coord));
+	//vec3 diffuse = light.diffuse * max(dot(norm, light_dir), 0.0) * vec3(texture(material.diffuse, text_coord)); //diapo 12
 	
 	//Luz especular 
 	// Cálculo da comp.especular con view_pos, light_pos e frag_3Dpos
@@ -68,7 +68,7 @@ void main(){
 	vec3 reflect_dir = reflect(-light_dir, normal);
 	float spec = pow(max(dot(view_dir, reflect_dir), 0.0), material.shininess);
 	vec3 specular = light.specular * spec * material.specular; //ata diapo 11
-	//vec3 specular = light.specular * spec * vec3(texture(material.specular,text_coord));	
+	//vec3 specular = light.specular * spec * vec3(texture(material.specular,text_coord));	//diapo 13
 	
 	vec3 result = ambient + diffuse + specular; 
 	frag_col = vec4(result, 1.0);

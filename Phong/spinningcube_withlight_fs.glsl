@@ -1,11 +1,17 @@
 #version 130
 
-struct Material {
-  vec3 ambient;
+/*struct Material {
+ 
   vec3 diffuse;
   vec3 specular;
   float shininess;
-};
+};*/
+
+struct Material {  // diapo 12
+	sampler2D diffuse;
+	vec3 specular;
+	float shininess;
+}; 
 
 struct Light {
   vec3 position;
@@ -38,21 +44,21 @@ void main() {
 
 vec3 CalcPointLight(Light light, vec3 view_dir){
 	//Luz ambiente
-  vec3 ambient = light.ambient * material.ambient;
+  vec3 ambient = light.ambient * vec3(texture(material.diffuse, vs_tex_coord));
   vec3 light_dir = normalize(light.position - frag_3Dpos);
 
   //Luz difusa
   // Cálculo da comp.difusa usando light_pos e frag_3Dpos
   float diff = max(dot(vs_normal, light_dir), 0.0);
-  vec3 diffuse = light.diffuse * diff * material.diffuse; //ata diapo 11
-  //vec3 diffuse = light.diffuse * max(dot(norm, light_dir), 0.0) * vec3(texture(material.diffuse, text_coord));
+  //vec3 diffuse = light.diffuse * diff * material.diffuse; //ata diapo 11
+  vec3 diffuse = light.diffuse * max(dot(vs_normal, light_dir), 0.0) * vec3(texture(material.diffuse, vs_tex_coord)); //diapo 12
 
   //Luz especular 
   // Cálculo da comp.especular con view_pos, light_pos e frag_3Dpos
   vec3 reflect_dir = reflect(-light_dir, vs_normal);
   float spec = pow(max(dot(view_dir, reflect_dir), 0.0), material.shininess);
   vec3 specular = light.specular * spec * material.specular; //ata diapo 11
-  //vec3 specular = light.specular * spec * vec3(texture(material.specular,text_coord));	z
+  //vec3 specular = light.specular * spec * vec3(texture(material.specular,vs_tex_coord));	
 
   return (ambient + diffuse + specular);
 }
