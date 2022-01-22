@@ -34,30 +34,24 @@ def normalize(x):
     x /= np.linalg.norm(x)
     return x
 
-def is_point_on_triangle(p, v0, v1, v2):
-    v0v1 = [v1[0] - v0[0], v1[1] - v0[1], v1[2] - v0[2]]
-    v1v2 = [v2[0] - v1[0], v2[1] - v1[1], v2[2] - v1[2]]
-    v2v0 = [v0[0] - v2[0], v0[1] - v0[1], v0[2] - v2[2]]
+def is_point_on_triangle(p, v0, v1, v2, N):
+    edge0 = np.array(v1) - np.array(v0)
+    edge1 = np.array(v2) - np.array(v1)
+    edge2 = np.array(v0) - np.array(v2)
+    C0 = p - v0
+    C1 = p - v1
+    C2 = p - v2
+    if (np.dot(N, np.cross(edge0, C0)) > 0 and np.dot(N, np.cross(edge1, C1)) > 0 and np.dot(N, np.cross(edge2, C2)) > 0):
+        return True;  # P is inside the triangle
+    return False
 
-    v0p = [p[0] - v0[0], p[1] - v0[1], p[2] - v0[2]]
-    v1p = [p[0] - v1[0], p[1] - v1[1], p[2] - v1[2]]
-    v2p = [p[0] - v2[0], p[1] - v2[1], p[2] - v2[2]]
+def get_point_intersection_ray_plane(rayPoint, rayDirection, d):
+    return rayPoint + rayDirection * d
 
-    res1 = np.dot(v0v1, v0p) > 0
-    res2 = np.dot(v1v2, v1p) > 0
-    res3 = np.dot(v2v0, v2p) > 0
 
-    return res1 and res2 and res3
-
-def get_point_intersection_ray_plane(rayPoint, rayDirection, planePoint, planeNormal):
-    ndotu = planeNormal.dot(rayDirection)
-
-    w = rayPoint - planePoint
-    si = -planeNormal.dot(w) / ndotu
-    return w + si * rayDirection + planePoint
 
 def intersect_plane(O, D, P, N):
-    # Return the distance from O to the intersection of the ray (O, D) with the 
+    # Return the distance from O to the intersection of the ray (O, D) with the
     # plane (P, N), or +inf if there is no intersection.
     # O and P are 3D points, D and N (normal) are normalized vectors.
     denom = np.dot(D, N)
@@ -78,15 +72,15 @@ def intersect_triangle(O, D, V1, V2, V3, TN):
     d = np.dot(V1 - O, TN) / denom
     if (d < 0):
         return np.inf
-    intersection = get_point_intersection_ray_plane(O, D, V1, TN)
-    is_in = is_point_on_triangle(intersection, V1, V2, V3)
+    intersection = get_point_intersection_ray_plane(O, D, d)
+    is_in = is_point_on_triangle(intersection, V1, V2, V3, TN)
     if not is_in:
         return np.inf
     return d
 
 
 def intersect_sphere(O, D, S, R):
-    # Return the distance from O to the intersection of the ray (O, D) with the 
+    # Return the distance from O to the intersection of the ray (O, D) with the
     # sphere (S, R), or +inf if there is no intersection.
     # O and S are 3D points, D (direction) is a normalized vector, R is a scalar.
     a = np.dot(D, D)
@@ -118,11 +112,10 @@ def get_normal(obj, M):
     if obj['type'] == 'sphere':
         N = normalize(M - obj['position'])
     elif obj['type'] == 'triangle':
-        N = obj['normal']
+        N = normalize(M - obj['normal'])
     elif obj['type'] == 'plane':
         N = obj['normal']
     return N
-
 
 def get_color(obj, M):
     color = obj['color']
@@ -170,9 +163,10 @@ def add_sphere(position, radius, color):
 
 
 def add_triangle(v1, v2, v3, color):
-    vector_1 = [v2[0] - v1[0], v2[1] - v1[1], v2[2] - v1[2]]
-    vector_2 = [v3[0] - v1[0], v3[1] - v1[1], v3[2] - v1[2]]
-    n = np.cross(vector_1, vector_2)
+    p1 = np.array(v1)
+    p2 = np.array(v2)
+    p3 = np.array(v3)
+    n = np.cross(p2 - p1, p3 - p1)
 
     return dict(type='triangle',
                 v1 = v1,
@@ -180,7 +174,7 @@ def add_triangle(v1, v2, v3, color):
                 v3 = v3,
                 normal = n,
                 color=np.array(color),
-                diffuse_c=.75, specular_c=.75, reflection=.5)
+                diffuse_c=.75, specular_c=.5, reflection=.25)
 
 
 def add_plane(position, normal):
@@ -216,23 +210,29 @@ def calculate_color(light, color_light):
 # List of objects.
 color_plane0 = 1. * np.ones(3)
 color_plane1 = 0. * np.ones(3)
+
 scene = [
-         add_sphere([.75, .1, 1.], .6, [0., 0., 1.]),
-         add_sphere([-.75, .1, 2.25], .6, [.5, .223, .5]),
-         add_sphere([-2.75, .1, 3.5], .6, [1., .572, .184]),
-         add_plane([0., -.5, 0.], [0., 1., 0.]),
-         add_triangle([0, .5, .25], [0, .75, .75], [.75, .75, .25], [0., 0., 1.])
-         ]
+        add_sphere([.75, .1, 1.], .6, [0., 0., 1.]),
+        #add_sphere([-.75, .1, 2.25], .6, [.5, .223, .5]),
+        add_sphere([-2.75, .1, 3.5], .6, [1., .572, .184]),
+        add_plane([0., -.5, 0.], [0., 1., 0.]),
+        add_triangle([-1.75, -.5 ,2.25], [.25, -.5 , 2.25], [-0.75, 1.5 , 2.25], [1., 0., 0.])
+        ]
 
 # Light position and color.
 L1 = np.array([5., 5., -10.])
 L2 = np.array([-20., 20., -10.])
 L3 = np.array([20., 20., -10.])
-lights = np.array([L1, L2, L3])
+#lights = np.array([L1, L2, L3])
+lights = np.array([L1, L2])
+#lights = np.array([L1])
+
 color_L1 = np.ones(3)
-color_L2 = np.array([1, 255, 10])
+color_L2 = np.array([1, 1, 1])
 color_L3 = np.array([255, 10, 10])
-colors = np.array([color_L1, color_L2, color_L3])
+#colors = np.array([color_L1, color_L2, color_L3])
+colors = np.array([color_L1, color_L2])
+#colors = np.array([color_L1])
 
 # Default light and material parameters.
 ambient = .05
