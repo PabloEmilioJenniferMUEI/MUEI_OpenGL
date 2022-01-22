@@ -302,7 +302,7 @@ void render(double currentTime) {
 	glm::mat3 normal_to_world; //declarar variables
 
 	//matrices
-	glUniform3f(materialD_location, material_diffuse.x, material_diffuse.y, material_diffuse.z);
+	glUniform1f(materialD_location, 0.0f);
 	glUniform3f(materialS_location, material_specular.x, material_specular.y, material_specular.z);
 	glUniform1f(materialSH_location, material_shininess);
 
