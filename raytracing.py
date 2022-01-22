@@ -211,6 +211,18 @@ def calculate_color(light, color_light):
 color_plane0 = 1. * np.ones(3)
 color_plane1 = 0. * np.ones(3)
 
+
+def add_triangle_strip(array_v, colors):
+    #Lo del rotate es para que la normal de todos apunte hacia delante y ver los colores
+    rotate = False
+    for i in range(len(array_v) - 2):
+        if rotate:
+            scene.append(add_triangle(array_v[i], array_v[i + 2], array_v[i + 1], colors[i]))
+        else:
+            scene.append(add_triangle(array_v[i], array_v[i + 1], array_v[i + 2], colors[i]))
+        rotate = not rotate
+
+
 scene = [
         add_sphere([.75, .1, 1.], .6, [0., 0., 1.]),
         #add_sphere([-.75, .1, 2.25], .6, [.5, .223, .5]),
@@ -218,6 +230,8 @@ scene = [
         add_plane([0., -.5, 0.], [0., 1., 0.]),
         add_triangle([-1.75, -.5 ,2.25], [.25, -.5 , 2.25], [-0.75, 1.5 , 2.25], [1., 0., 0.])
         ]
+
+add_triangle_strip([[-1.75, -.5, 2.25], [.25, -.5, 2.25], [-0.75, 1.5, 2.25], [.25, 1.5, 2.25], [-.25, 2, 2.25]], [[1., 0., 0.], [0., 1., 0.], [0., 0., 1.]])
 
 # Light position and color.
 L1 = np.array([5., 5., -10.])
