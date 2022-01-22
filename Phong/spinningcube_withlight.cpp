@@ -14,8 +14,8 @@
 
 #include "textfile.c"
 
-int gl_width = 640;
-int gl_height = 480;
+int gl_width = 1042;
+int gl_height = 620;
 
 void glfw_window_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
@@ -34,24 +34,18 @@ const char *fragmentFileName = "spinningcube_withlight_fs.glsl";
 glm::vec3 camera_pos(0.0f, 0.0f, 3.0f);
 
 // Lighting
-glm::vec3 light_pos(-0.5f, 0.5f, 0.0f);
+glm::vec3 light_pos(1.2f, 1.0f, 2.0f);
 glm::vec3 light_ambient(0.2f, 0.2f, 0.2f);
 glm::vec3 light_diffuse(0.5f, 0.5f, 0.5f);
 glm::vec3 light_specular(1.0f, 1.0f, 1.0f);
 
-glm::vec3 pointLightPositions[] = {
-glm::vec3(1.2f, 1.0f, 2.0f),
-glm::vec3(-1.2f, -1.0f, 2.0f)
-}; 
-
 // Material
 glm::vec3 material_ambient(1.0f, 0.5f, 0.31f);
-glm::vec3 material_diffuse(1.0f, 0.5f, 0.31f);
-glm::vec3 material_specular(0.5f, 0.5f, 0.5f);
-const GLfloat material_shininess = 32.0f;
+const GLfloat material_shininess = 10.0f;
 
 // Texture
 unsigned int diffuseMap;
+unsigned int specularMap;
 
 int main() {
 	// start GL context and O/S window using the GLFW helper library
@@ -162,47 +156,47 @@ int main() {
 	//
 	const GLfloat vertex_positions[] = { 
         // positions          // normals           // texture coords
-        -0.25, -0.25, -0.25,  0.0f,  0.0f, -1.0f,  0.0f,  0.0f,
-         0.25, -0.25, -0.25,  0.0f,  0.0f, -1.0f,  1.0f,  0.0f,
-         0.25,  0.25, -0.25,  0.0f,  0.0f, -1.0f,  1.0f,  1.0f,
-         0.25,  0.25, -0.25,  0.0f,  0.0f, -1.0f,  1.0f,  1.0f,
-        -0.25,  0.25, -0.25,  0.0f,  0.0f, -1.0f,  0.0f,  1.0f,
-        -0.25, -0.25, -0.25,  0.0f,  0.0f, -1.0f,  0.0f,  0.0f,
+	        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  0.0f,
+         0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  0.0f,
+         0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  1.0f,
+         0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  1.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  0.0f,
 
-        -0.25, -0.25,  0.25,  0.0f,  0.0f,  1.0f,  0.0f,  0.0f,
-         0.25, -0.25,  0.25,  0.0f,  0.0f,  1.0f,  1.0f,  0.0f,
-         0.25,  0.25,  0.25,  0.0f,  0.0f,  1.0f,  1.0f,  1.0f,
-         0.25,  0.25,  0.25,  0.0f,  0.0f,  1.0f,  1.0f,  1.0f,
-        -0.25,  0.25,  0.25,  0.0f,  0.0f,  1.0f,  0.0f,  1.0f,
-        -0.25, -0.25,  0.25,  0.0f,  0.0f,  1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f,  0.0f,
+         0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  0.0f,
+         0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  1.0f,
+         0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  1.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f,  1.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f,  0.0f,
 
-        -0.25,  0.25,  0.25, -1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
-        -0.25,  0.25, -0.25, -1.0f,  0.0f,  0.0f,  1.0f,  1.0f,
-        -0.25, -0.25, -0.25, -1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
-        -0.25, -0.25, -0.25, -1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
-        -0.25, -0.25,  0.25, -1.0f,  0.0f,  0.0f,  0.0f,  0.0f,
-        -0.25,  0.25,  0.25, -1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
+        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
+        -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  1.0f,  1.0f,
+        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
+        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
+        -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  0.0f,  0.0f,
+        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
 
-         0.25,  0.25,  0.25,  1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
-         0.25,  0.25, -0.25,  1.0f,  0.0f,  0.0f,  1.0f,  1.0f,
-         0.25, -0.25, -0.25,  1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
-         0.25, -0.25, -0.25,  1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
-         0.25, -0.25,  0.25,  1.0f,  0.0f,  0.0f,  0.0f,  0.0f,
-         0.25,  0.25,  0.25,  1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
+         0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
+         0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  1.0f,
+         0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
+         0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
+         0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  0.0f,  0.0f,
+         0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
 
-        -0.25, -0.25, -0.25,  0.0f, -1.0f,  0.0f,  0.0f,  1.0f,
-         0.25, -0.25, -0.25,  0.0f, -1.0f,  0.0f,  1.0f,  1.0f,
-         0.25, -0.25,  0.25,  0.0f, -1.0f,  0.0f,  1.0f,  0.0f,
-         0.25, -0.25,  0.25,  0.0f, -1.0f,  0.0f,  1.0f,  0.0f,
-        -0.25, -0.25,  0.25,  0.0f, -1.0f,  0.0f,  0.0f,  0.0f,
-        -0.25, -0.25, -0.25,  0.0f, -1.0f,  0.0f,  0.0f,  1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f,  1.0f,
+         0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f,  1.0f,
+         0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f,  0.0f,
+         0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f,  0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f,  1.0f,
 
-        -0.25,  0.25, -0.25,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f,
-         0.25,  0.25, -0.25,  0.0f,  1.0f,  0.0f,  1.0f,  1.0f,
-         0.25,  0.25,  0.25,  0.0f,  1.0f,  0.0f,  1.0f,  0.0f,
-         0.25,  0.25,  0.25,  0.0f,  1.0f,  0.0f,  1.0f,  0.0f,
-        -0.25,  0.25,  0.25,  0.0f,  1.0f,  0.0f,  0.0f,  0.0f,
-        -0.25,  0.25, -0.25,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f
+        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f,
+         0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  1.0f,
+         0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  0.0f,
+         0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  0.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  0.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f
 	};
 
 	// Vertex Buffer Object (for vertex coordinates)
@@ -213,17 +207,17 @@ int main() {
 
 	// Vertex attributes
 	// 0: vertex position (x, y, z)
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 
 	// 1: vertex normals (x, y, z)
 	// normal
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
+        glEnableVertexAttribArray(1);
 	
 	  // texture
-     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-	 glEnableVertexAttribArray(2);
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+	glEnableVertexAttribArray(2);
 
 
 	// Unbind vbo (it was conveniently registered by VertexAttribPointer)
@@ -248,7 +242,7 @@ int main() {
 	view_location = glGetUniformLocation(shader_program, "view");
 	proj_location = glGetUniformLocation(shader_program, "projection");
 
-
+        //material
 	normal_to_world_location = glGetUniformLocation(shader_program, "normal_to_world");
 	materialD_location = glGetUniformLocation(shader_program, "material.diffuse");
 	materialS_location = glGetUniformLocation(shader_program, "material.specular");
@@ -268,8 +262,9 @@ int main() {
 	lightS_location_2 = glGetUniformLocation(shader_program, "pointLights[1].specular");
 	lightP_location_2 = glGetUniformLocation(shader_program, "pointLights[1].position");
 	
-    // load textures
-    diffuseMap = loadTexture("container2.png");
+	// textures
+        diffuseMap = loadTexture("container2.png");
+        specularMap = loadTexture("container2_specular.png");
 
 	// Render loop
 	while(!glfwWindowShouldClose(window)) {
@@ -302,8 +297,8 @@ void render(double currentTime) {
 	glm::mat3 normal_to_world; //declarar variables
 
 	//matrices
-	glUniform1f(materialD_location, 0.0f);
-	glUniform3f(materialS_location, material_specular.x, material_specular.y, material_specular.z);
+	glUniform1i(materialD_location, 0);
+	glUniform1i(materialS_location, 1);
 	glUniform1f(materialSH_location, material_shininess);
 
 	glUniform3f(view_pos_location, camera_pos.x, camera_pos.y, camera_pos.z);  
@@ -330,6 +325,7 @@ void render(double currentTime) {
 	glUniformMatrix4fv(view_location, 1, GL_FALSE, glm::value_ptr(view));
 	// cube1
 	model = glm::mat4(1.f);
+	model = glm::translate(model, glm::vec3(1.0f, 0.0f, 0.0f));
 	model = glm::rotate(model,
 						  glm::radians((float)currentTime * 45.0f),
 						  glm::vec3(0.0f, 1.0f, 0.0f));
@@ -348,8 +344,11 @@ void render(double currentTime) {
 	glUniformMatrix3fv(normal_to_world_location, 1, GL_FALSE, glm::value_ptr(normal_to_world)); 
 	
 	// Activate textures
-	glActiveTexture(GL_TEXTURE0);
+	glActiveTexture(GL_TEXTURE0); // Texture 1
 	glBindTexture(GL_TEXTURE_2D, diffuseMap);
+	
+	glActiveTexture(GL_TEXTURE1); // Texture 2 
+	glBindTexture(GL_TEXTURE_2D, specularMap);
 
 	//  Draw cube 1
 	glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -357,6 +356,11 @@ void render(double currentTime) {
 	//cube2 
 	cube_2 = glm::mat4(1.f);
 	cube_2 = glm::translate(cube_2, glm::vec3(-1.0f, 0.0f, 0.0f));
+	cube_2 = glm::translate(cube_2, glm::vec3(0.0f, 0.0f, 0.0f));
+	cube_2 = glm::translate(cube_2,
+		                     glm::vec3(sinf(2.1f * f) * 0.5f,
+		                               cosf(1.7f * f) * 0.5f,
+		                               sinf(1.3f * f) * cosf(1.5f * f) * 2.0f));
 	cube_2 = glm::scale(cube_2, glm::vec3(0.5f));;
 	cube_2 = glm::rotate(cube_2,
 						  glm::radians((float)currentTime * 45.0f),
